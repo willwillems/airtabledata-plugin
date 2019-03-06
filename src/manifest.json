@@ -1,0 +1,23 @@
+{
+  "compatibleVersion": 3,
+  "bundleVersion": 1,
+  "icon": "icon.png",
+  "suppliesData": true,
+  "commands": [
+    {
+      "script": "get-data.js",
+      "handlers": {
+        "actions": {
+          "Startup": "onStartup",
+          "Shutdown": "onShutdown",
+          "FillTxt": "onFillTxt",
+          "FillImg": "onFillImg"
+        }
+      }
+    }
+  ],
+  
+  "menu": {
+    "title": "Airtabledata Plugin"
+  }
+}
