@@ -13,28 +13,22 @@ const {
   getCharString,
   getBoolString,
   getPascalString,
-  getJsCodeResult
+  getJsCodeResult,
+  getPromptTitle,
+  getPromptDescription
 } = require('./utils')
 
 
 const FOLDER = path.join(os.tmpdir(), 'com.sketchapp.airtable-data-plugin')
 
-const promptMessages = {
-  'apiKey': 'What is your Airtable API key?',
-  'baseToken': 'What is the token of the base you want to use?',
-  'table': 'What is the name of the table you want to use?'
-}
 
-function getPromptMessage(key) {
-  return promptMessages[key] || `Please input: ${key}`
-}
 
 function getDocumentSetting (key) {
   // if valid setting return (gives undefined when not defined)
   const setting = Settings.documentSettingForKey(document, key)
   if(setting) return setting
   // else get var trough prompt
-  UI.getInputFromUser(getPromptMessage(key), (err, value) => {
+  UI.getInputFromUser(getPromptTitle(key), { description: getPromptDescription(key) }, (err, value) => {
       if (err) {
         // most likely the user canceled the input
         return
@@ -51,7 +45,7 @@ function getPluginSetting (key) {
   const setting = Settings.settingForKey(key)
   if(setting) return setting
   // else get var trough prompt
-  UI.getInputFromUser(getPromptMessage(key), (err, value) => {
+  UI.getInputFromUser(getPromptTitle(key), (err, value) => {
       if (err) {
         // most likely the user canceled the input
         return

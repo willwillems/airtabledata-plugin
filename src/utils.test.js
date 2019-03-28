@@ -1,8 +1,12 @@
+import { promptMessages } from './constants'
+
 import {
   getCharString,
   getBoolString,
   getPascalString,
-  getJsCodeResult
+  getJsCodeResult,
+  getPromptTitle,
+  getPromptDescription
 } from './utils'
 
 describe('the char string function', () => {
@@ -56,5 +60,17 @@ describe('the get JS result function', () => {
 
   it('exposes the variables on the var object', () => {
     expect(getJsCodeResult('testVar', {testVar: 'TestString'})).toBe('TestString')
+  })
+})
+
+describe('the prompt functions', () => {
+  it('gets the correct title', () => {
+    expect(getPromptTitle(Object.keys(promptMessages)[0])).toBe(Object.values(promptMessages)[0].title)
+    expect(getPromptTitle('test123')).toMatch('test123')
+  })
+
+  it('gets the correct description', () => {
+    expect(getPromptDescription(Object.keys(promptMessages)[0])).toBe(Object.values(promptMessages)[0].description)
+    expect(getPromptDescription('test123')).toBe('')
   })
 })

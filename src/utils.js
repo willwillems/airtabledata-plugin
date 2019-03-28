@@ -4,6 +4,8 @@ import upperFirst from 'lodash/upperFirst'
 import camelCase from 'lodash/camelCase'
 import ejs from './ejs'
 
+const { promptMessages } = require('./constants')
+
 /**
  * Create a string filled with chars 
  *
@@ -48,4 +50,24 @@ export const getPascalString = (string) => {
  */
 export const getJsCodeResult = (jsCode, varObject = {}) => {
   return ejs.render(`<%=${jsCode}%>`, varObject) || ''
+}
+
+/**
+ * Get title for the corresponing user prompt
+ *
+ * @param {string} key - The key corresponding to desired prompt
+ * @return {string} The title corresponding to desired prompt
+ */
+export const getPromptTitle = (key) => {
+  return (promptMessages[key] && promptMessages[key].title) || `Please input: ${key}`
+}
+
+/**
+ * Get description for the corresponing user prompt
+ *
+ * @param {string} key - The key corresponding to desired prompt
+ * @return {string} The description corresponding to desired prompt
+ */
+export const getPromptDescription = (key) => {
+  return (promptMessages[key] && promptMessages[key].description) || ''
 }
