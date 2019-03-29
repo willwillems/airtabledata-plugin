@@ -164,7 +164,7 @@ export function onFillTxtById (context) {
   // Get ID from user
   getInputFromUserPromise("What's the URL of the record you want to use?")
     .then(input => {
-      const recordId = input.split('#')[0].split('/').pop()
+      const recordId = input.split('#')[0].split('?')[0].split('/').pop()
       UI.message('🕑 Fetching data')
       return getAirtableRecordById({count, recordId})
     })
@@ -204,7 +204,7 @@ export function onFillImgById (context) {
   // Get ID from user
   getInputFromUserPromise("What's the URL of the record you want to use?")
     .then(input => {
-      const recordId = input.split('#')[0].split('/').pop()
+      const recordId = input.split('#')[0].split('?')[0].split('/').pop()
       UI.message('🕑 Fetching data')
       return getAirtableRecordById({ count, recordId })
     })
