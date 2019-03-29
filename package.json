@@ -1,6 +1,6 @@
 {
   "name": "airtabledata-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A simple way to get your Airtable data into your sketch symbols.",
   "appcast": "https://sketchairtabledataplugin.com/airtabledata-plugin-appcast.xml",
   "engines": {
@@ -28,6 +28,7 @@
   "author": "Rutger Willems <rut.willems@gmail.com>",
   "dependencies": {
     "@babel/core": "^7.3.4",
+    "@babel/polyfill": "^7.4.0",
     "@babel/preset-env": "^7.3.4",
     "@skpm/fs": "^0.2.4",
     "airtable": "^0.5.9",

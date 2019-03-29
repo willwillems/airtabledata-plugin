@@ -1,3 +1,5 @@
+require("@babel/polyfill");
+
 const sketch = require('sketch')
 const { DataSupplier, UI } = sketch
 const util = require('util')
@@ -18,45 +20,35 @@ const {
   getPromptDescription
 } = require('./utils')
 
+const {
+  changeApiKey,
+  changeBase,
+  changeActiveTable
+} = require('./settings')
+
 
 const FOLDER = path.join(os.tmpdir(), 'com.sketchapp.airtable-data-plugin')
 
-
-
-function getDocumentSetting (key) {
-  // if valid setting return (gives undefined when not defined)
-  const setting = Settings.documentSettingForKey(document, key)
-  if(setting) return setting
-  // else get var trough prompt
-  UI.getInputFromUser(getPromptTitle(key), { description: getPromptDescription(key) }, (err, value) => {
-      if (err) {
-        // most likely the user canceled the input
-        return
-      }
-      Settings.setDocumentSettingForKey(document, key, value)
-    }
-  )
-  // return the new value
-  return Settings.documentSettingForKey(document, key)
+async function getApiKey () {
+  const setting = Settings.settingForKey('apiKey')
+  return setting
+    ? setting
+    : await changeApiKey()
 }
 
-function getPluginSetting (key) {
-  // if valid setting return (gives undefined when not defined)
-  const setting = Settings.settingForKey(key)
-  if(setting) return setting
-  // else get var trough prompt
-  UI.getInputFromUser(getPromptTitle(key), (err, value) => {
-      if (err) {
-        // most likely the user canceled the input
-        return
-      }
-      Settings.setSettingForKey(key, value)
-    }
-  )
-  // return the new value
-  return Settings.settingForKey(key)
+async function getBaseToken () {
+  const setting = Settings.settingForKey('baseToken')
+  return setting
+    ? setting
+    : await changeBase()
 }
 
+async function getActiveTable () {
+  const setting = Settings.documentSettingForKey(document, 'table')
+  return setting
+    ? setting
+    : await changeActiveTable()
+}
 
 export function onStartup () {
   console.log('*************** ADPlugin Start: onStartup')
@@ -65,7 +57,6 @@ export function onStartup () {
   DataSupplier.registerDataSupplier('public.text', 'Airtable Text', 'FillTxt')
   DataSupplier.registerDataSupplier('public.image', 'Airtable Image', 'FillImg')
   console.log('*************** ADPlugin Registered Data suppliers')
-
 }
 
 export function onShutdown () {
@@ -142,9 +133,12 @@ export function onFillImg (context) {
       const fieldsArray = data.map(d => d.fields)
       items.forEach((item, index) => {
         const rowData = fieldsArray[index]
-        const layer = document.getLayerWithID(item.override.path)
+        const layer = (() => {
+          if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
+          return item
+        })()
         const layerName = layer.name
-        const field = rowData[layerName] || ''
+        const field = (rowData[layerName] && rowData[layerName][0] && rowData[layerName][0].url) || rowData[layerName] || ''
         if(!field) return UI.message('❕No image found, check your layer name.')
         return getImageFromURL(field) // should map with an promise.all
           .then(imagePath => {
@@ -154,13 +148,14 @@ export function onFillImg (context) {
     })
     .catch((e) => {
       UI.message('❗️Something went wrong.')
+      console.error(e)
     })
 }
 
-function getAirtableData({ count }) {
-  return fetch(`https://api.airtable.com/v0/${getPluginSetting('baseToken')}/${getDocumentSetting('table')}?maxRecords=${count}&view=Grid%20view`, {
+async function getAirtableData({ count }) {
+  return fetch(`https://api.airtable.com/v0/${await getBaseToken()}/${await getActiveTable()}?maxRecords=${count}&view=Grid%20view`, {
     headers: {
-      'Authorization': `Bearer ${getPluginSetting('apiKey')}`
+      'Authorization': `Bearer ${await getApiKey()}`
     }
   })
     .then(res => res.json())
@@ -178,7 +173,7 @@ function getAirtableData({ count }) {
 // From: https://github.com/BohemianCoding/unsplash-sketchplugin/blob/master/src/DataProvider.js
 //
 function getImageFromURL (url) {
-  console.log('getting image')
+  console.log('*************** ADPlugin fetching image from URL')
   return fetch(url)
     .then(res => res.blob())
     // TODO: use imageData directly, once #19391 is implemented
@@ -193,20 +188,20 @@ function getImageFromURL (url) {
 // From: https://github.com/BohemianCoding/unsplash-sketchplugin/blob/master/src/DataProvider.js
 //
 function saveTempFileFromImageData (imageData) {
-  console.log('saving temp file')
+  console.log('*************** ADPlugin saving temporary file')
   const guid = NSProcessInfo.processInfo().globallyUniqueString()
   const imagePath = path.join(FOLDER, `${guid}.jpg`)
   try {
     fs.mkdirSync(FOLDER)
-    console.log('created dir')
+    console.log(`*************** ADPlugin created directory: ${FOLDER}`)
   } catch (err) {
-    console.log('saving temp file error 1')
+    console.error(err)
     // probably because the folder already exists
     // TODO: check that it is really because it already exists
   }
   try {
     fs.writeFileSync(imagePath, imageData, 'NSData')
-    console.log('wrote file', imagePath)
+    console.log(`*************** ADPlugin wrote file: ${imagePath}`)
     return imagePath
   } catch (err) {
     console.error(err)

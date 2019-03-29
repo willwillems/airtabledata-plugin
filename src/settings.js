@@ -8,53 +8,66 @@ const {
   getPromptDescription
 } = require('./utils')
 
+function changePluginSetting (key) {
+  // get the value before change
+  const initialVal = Settings.settingForKey(key)
+  return new Promise((resolve, reject) => {
+    UI.getInputFromUser(getPromptTitle(key),
+      // options
+      {
+        description: getPromptDescription(key),
+        initialValue: initialVal
+      },
+      // callback
+      (err, value) => {
+        if (err) {
+          // most likely the user canceled the input
+          console.log('*************** ADPlugin changeDocumentSetting failed', err)
+          return reject(initialVal)
+        }
+        Settings.setSettingForKey(key, value)
+        return resolve(value)
+      }
+    )
+  })
+}
+
+function changeDocumentSetting (key) {
+  // get the value before change
+  const initialVal = Settings.documentSettingForKey(document, key)
+  return new Promise((resolve, reject) => {
+    UI.getInputFromUser(getPromptTitle(key),
+      // options
+      {
+        description: getPromptDescription(key),
+        initialValue: initialVal
+      },
+      // callback
+      (err, value) => {
+        if (err) {
+          // most likely the user canceled the input
+          console.log('*************** ADPlugin changeDocumentSetting failed', err)
+          return reject(initialVal)
+        }
+        Settings.setDocumentSettingForKey(document, key, value)
+        console.log(`*************** ADPlugin saved new document value: "${key}": "${value}"`)
+        return resolve(value)
+      }
+    )
+  })
+}
+
 export function changeApiKey () {
-  const key = 'apiKey'
   console.log('*************** ADPlugin Triggered changeApiKey function')
-  UI.getInputFromUser(getPromptTitle(key),
-  { 
-    description: getPromptDescription(key),
-    initialValue: Settings.settingForKey(key)
-  }, (err, value) => {
-    if (err) {
-      // most likely the user canceled the input
-      console.log('*************** ADPlugin changeApiKey failed', err)
-      return
-    }
-    return Settings.setSettingForKey(key, value)
-  })
+  return changePluginSetting('apiKey')
 }
 
-export function changeBase () {
-  const key = 'baseToken'
+export function changeBase (callback) {
   console.log('*************** ADPlugin Triggered changeBase function')
-  UI.getInputFromUser(getPromptTitle(key),
-  {
-    description: getPromptDescription(key),
-    initialValue: Settings.settingForKey(key)
-  }, (err, value) => {
-    if (err) {
-      // most likely the user canceled the input
-      console.log('*************** ADPlugin changeBase failed', err)
-      return
-    }
-    return Settings.setDocumentSettingForKey(document, key, value)
-  })
+  return changePluginSetting('baseToken')
 }
 
-export function changeActiveTable () {
-  const key = 'table'
+export function changeActiveTable (callback) {
   console.log('*************** ADPlugin Triggered changeActiveTable function')
-  UI.getInputFromUser(getPromptTitle(key),
-  {
-    description: getPromptDescription(key),
-    initialValue: Settings.documentSettingForKey(document, key)
-  }, (err, value) => {
-    if (err) {
-      // most likely the user canceled the input
-      console.log('*************** ADPlugin changeActiveTable failed', err)
-      return
-    }
-    return Settings.setDocumentSettingForKey(document, key, value)
-  })
+  return changeDocumentSetting('table')
 }
