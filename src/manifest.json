@@ -1,5 +1,5 @@
 {
-  "name": "airtabledata-plugin",
+  "name": "Airtabledata Plugin",
   "description": "A simple way to get your Airtable data into your sketch symbols.",
   "author": "Nickolas Boyer",
   "homepage": "https://sketchairtabledataplugin.com/",
@@ -16,7 +16,9 @@
           "Startup": "onStartup",
           "Shutdown": "onShutdown",
           "FillTxt": "onFillTxt",
-          "FillImg": "onFillImg"
+          "FillTxtById": "onFillTxtById",
+          "FillImg": "onFillImg",
+          "FillImgById": "onFillImgById"
         }
       }
     },
