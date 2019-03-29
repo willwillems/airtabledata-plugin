@@ -86,7 +86,10 @@ export function onFillTxt (context) {
       const fieldsArray = data.map(d => d.fields)  // get the fields from airtable data
       items.forEach((item, index) => {
         const rowData = fieldsArray[index]
-        const layer = document.getLayerWithID(item.override.path)
+        const layer = (() => {
+          if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
+          return item
+        })()
         const layerName = layer.name
 
         const result = (() => {
