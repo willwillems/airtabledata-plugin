@@ -133,7 +133,10 @@ export function onFillImg (context) {
       const fieldsArray = data.map(d => d.fields)
       items.forEach((item, index) => {
         const rowData = fieldsArray[index]
-        const layer = document.getLayerWithID(item.override.path)
+        const layer = (() => {
+          if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
+          return item
+        })()
         const layerName = layer.name
         const field = (rowData[layerName] && rowData[layerName][0] && rowData[layerName][0].url) || rowData[layerName] || ''
         if(!field) return UI.message('❕No image found, check your layer name.')
