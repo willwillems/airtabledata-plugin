@@ -3,7 +3,7 @@
   "description": "A simple way to get your Airtable data into your sketch symbols.",
   "author": "Nickolas Boyer",
   "homepage": "https://sketchairtabledataplugin.com/",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "compatibleVersion": 3,
   "bundleVersion": 1,
   "icon": "icon.png",
