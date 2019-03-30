@@ -16,9 +16,7 @@
           "Startup": "onStartup",
           "Shutdown": "onShutdown",
           "FillTxt": "onFillTxt",
-          "FillTxtById": "onFillTxtById",
-          "FillImg": "onFillImg",
-          "FillImgById": "onFillImgById"
+          "FillImg": "onFillImg"
         }
       }
     },
