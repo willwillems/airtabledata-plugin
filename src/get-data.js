@@ -50,6 +50,15 @@ async function getActiveTable () {
     : await changeActiveTable()
 }
 
+function getInputFromUserPromise (...args) {
+  return new Promise((resolve, reject) => {
+    UI.getInputFromUser(...args.slice(0, 2), (err, value) => {
+      if (err) return reject(err)
+      resolve(value)
+    })
+  })
+}
+
 export function onStartup () {
   console.log('*************** ADPlugin Start: onStartup')
 
@@ -73,6 +82,63 @@ export function onShutdown () {
   }
 }
 
+async function supplyData (items, data, dataKey, proccessDataFunction) {
+  items.forEach(async (item, index) => {
+    // get the layer we want to supply data to
+    const layer = (() => {
+      if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
+      return item
+    })()
+    const layerName = layer.name
+    // if it exists get the record id from the parent
+    const recordId = (() => {
+      const parentName = (item.symbolInstance || item.parent).name
+      return parentName.match(/@rec[a-zA-Z1-9]+$/)
+        ? parentName.match(/@rec[a-zA-Z1-9]+$/)[0].slice(1)
+        : null
+    })()
+    // get the data for the row, either from a specific record or from the list
+    const rowData = recordId
+     ? await getAirtableRecordById(recordId)
+     : data[index]
+
+    const result = await proccessDataFunction(layerName, rowData)
+    if(!result) return // TODO: maybe UI message here?
+    return DataSupplier.supplyDataAtIndex(dataKey, result, index)
+  })
+}
+
+function proccessTxtLayer (layerName, rowData) {
+  const identifier = layerName.trim().substring(0,1)
+  const command = layerName.trim().substring(1).trim()
+
+  const pascalCaseRowData = mapKeys(rowData, (val, key) => getPascalString(key))
+
+  console.log('*************** ADPlugin data:')
+  console.log('*************** Identifier: ' + identifier)
+  console.log('*************** command: ' + command)
+
+  if (identifier == '>') return getJsCodeResult(command, pascalCaseRowData)
+  const dataVar = pascalCaseRowData[command.split(' ')[0]] // get the first arg var from the airtable data 
+  const restArgs = command.split(' ').slice(1) // pass the rest on to the functions
+  console.log('*************** dataVar: ' + dataVar)
+  if (identifier == '#') return getCharString(dataVar, ...restArgs)
+  if (identifier == '?') return getBoolString(dataVar, ...restArgs)
+
+  console.log('*************** ADPlugin No command match. Attempt to match to data field')
+  return String(rowData[layerName]) || ''
+}
+
+function proccessImgLayer (layerName, rowData) {
+  const field = (rowData[layerName] && rowData[layerName][0] && rowData[layerName][0].url) || rowData[layerName] || ''
+  if(!field) return UI.message('❕No image found, check your layer name.')
+  // TODO: Check if proper URL
+  return getImageFromURL(field) // should map with an promise.all
+    .then(imagePath => {
+      return imagePath
+    })
+}
+
 export function onFillTxt (context) {
   console.log('*************** ADPlugin FillTxt: onFillTxt')
   let dataKey = context.data.key
@@ -83,43 +149,11 @@ export function onFillTxt (context) {
   console.log('*************** ADPlugin - Fetching data')
   getAirtableData({count})
     .then(data => {
-      const fieldsArray = data.map(d => d.fields)  // get the fields from airtable data
-      items.forEach((item, index) => {
-        const rowData = fieldsArray[index]
-        const layer = (() => {
-          if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
-          return item
-        })()
-        const layerName = layer.name
-
-        const result = (() => {
-          const identifier = layerName.trim().substring(0,1)
-          const command = layerName.trim().substring(1).trim()
-
-          const pascalCaseRowData = mapKeys(rowData, (val, key) => getPascalString(key))
-
-          console.log('*************** ADPlugin data:')
-          console.log('*************** Identifier: ' + identifier)
-          console.log('*************** command: ' + command)
-
-          if (identifier == '>') return getJsCodeResult(command, pascalCaseRowData)
-          const dataVar = pascalCaseRowData[command.split(' ')[0]] // get the first arg var from the airtable data 
-          const restArgs = command.split(' ').slice(1) // pass the rest on to the functions
-          console.log('*************** dataVar: ' + dataVar)
-          if (identifier == '#') return getCharString(dataVar, ...restArgs)
-          if (identifier == '?') return getBoolString(dataVar, ...restArgs)
-
-          console.log('*************** ADPlugin No command match. Attempt to match to data field')
-          return rowData[layerName]
-        })()
-
-        if(!result) UI.message('❕No data found, check your layer name.')
-        console.log(result)
-        DataSupplier.supplyDataAtIndex(dataKey, result || '', index)
-      })
+      return supplyData(items, data, dataKey, proccessTxtLayer)
     })
     .catch((e) => {
       UI.message('❗️Something went wrong.')
+      console.error(e)
     })
 }
 
@@ -133,21 +167,7 @@ export function onFillImg (context) {
   getAirtableData({count})
     .then(data => {
       console.log('*************** ADPlugin fetched airtable data');
-      const fieldsArray = data.map(d => d.fields)
-      items.forEach((item, index) => {
-        const rowData = fieldsArray[index]
-        const layer = (() => {
-          if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
-          return item
-        })()
-        const layerName = layer.name
-        const field = (rowData[layerName] && rowData[layerName][0] && rowData[layerName][0].url) || rowData[layerName] || ''
-        if(!field) return UI.message('❕No image found, check your layer name.')
-        return getImageFromURL(field) // should map with an promise.all
-          .then(imagePath => {
-            DataSupplier.supplyDataAtIndex(dataKey, imagePath, index)
-          })
-      })
+      return supplyData(items, data, dataKey, proccessImgLayer)
     })
     .catch((e) => {
       UI.message('❗️Something went wrong.')
@@ -164,11 +184,20 @@ async function getAirtableData({ count }) {
     .then(res => res.json())
     // TODO: use imageData directly, once #19391 is implemented
     .then(data => {
-      return data.records
+      return data.records.map(d => d.fields) // get the records and return the object with the fields
     })
-    .catch((err) => {
-      console.error(err)
-      return 'error'
+}
+
+async function getAirtableRecordById (recordId) {
+  return fetch(`https://api.airtable.com/v0/${await getBaseToken()}/${await getActiveTable()}/${recordId}`, {
+    headers: {
+      'Authorization': `Bearer ${await getApiKey()}`
+    }
+  })
+    .then(res => res.json())
+    // TODO: use imageData directly, once #19391 is implemented
+    .then(data => {
+      return data.fields
     })
 }
 
