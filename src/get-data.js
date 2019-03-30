@@ -103,6 +103,7 @@ async function supplyData (items, data, dataKey, proccessDataFunction) {
      : data[index]
 
     const result = await proccessDataFunction(layerName, rowData)
+    if(!result) return // TODO: maybe UI message here?
     return DataSupplier.supplyDataAtIndex(dataKey, result, index)
   })
 }
@@ -125,12 +126,13 @@ function proccessTxtLayer (layerName, rowData) {
   if (identifier == '?') return getBoolString(dataVar, ...restArgs)
 
   console.log('*************** ADPlugin No command match. Attempt to match to data field')
-  return rowData[layerName] || ''
+  return String(rowData[layerName]) || ''
 }
 
 function proccessImgLayer (layerName, rowData) {
   const field = (rowData[layerName] && rowData[layerName][0] && rowData[layerName][0].url) || rowData[layerName] || ''
   if(!field) return UI.message('❕No image found, check your layer name.')
+  // TODO: Check if proper URL
   return getImageFromURL(field) // should map with an promise.all
     .then(imagePath => {
       return imagePath
