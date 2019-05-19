@@ -89,10 +89,18 @@ async function supplyData (items, data, dataKey, proccessDataFunction) {
       if(item.type === 'DataOverride') return item.override.affectedLayer
       return item
     })()
-    const layerName = layer.name
+    const parentName = (item.symbolInstance || item.parent).name
+    // if it exists get and replace names from parent title
+    const layerName = (() => {
+      const matches = parentName.match(/\$[a-zA-Z1-9]+=[a-zA-Z1-9]+/g) || [] // matchAll() not available
+      // for every match split the $target=value and replace it in the layer name
+      return matches.reduce((acc, match) => {
+        const [target, value] = match.slice(1).split('=')
+        return acc.includes(target) ? acc.replace(target, value) : acc
+      }, layer.name)
+    })()
     // if it exists get the record id from the parent
     const recordId = (() => {
-      const parentName = (item.symbolInstance || item.parent).name
       return parentName.match(/@rec[a-zA-Z1-9]+$/)
         ? parentName.match(/@rec[a-zA-Z1-9]+$/)[0].slice(1)
         : null
@@ -126,7 +134,7 @@ function proccessTxtLayer (layerName, rowData) {
   if (identifier == '?') return getBoolString(dataVar, ...restArgs)
 
   console.log('*************** ADPlugin No command match. Attempt to match to data field')
-  return rowData[layerName] || ''
+  return rowData[layerName] ? String(rowData[layerName]) : ''
 }
 
 function proccessImgLayer (layerName, rowData) {
