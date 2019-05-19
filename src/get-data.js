@@ -86,7 +86,7 @@ async function supplyData (items, data, dataKey, proccessDataFunction) {
   items.forEach(async (item, index) => {
     // get the layer we want to supply data to
     const layer = (() => {
-      if(item.type === 'DataOverride') return document.getLayerWithID(item.override.path)
+      if(item.type === 'DataOverride') return item.override.affectedLayer
       return item
     })()
     const layerName = layer.name
