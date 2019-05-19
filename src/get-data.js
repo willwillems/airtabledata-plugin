@@ -126,7 +126,7 @@ function proccessTxtLayer (layerName, rowData) {
   if (identifier == '?') return getBoolString(dataVar, ...restArgs)
 
   console.log('*************** ADPlugin No command match. Attempt to match to data field')
-  return String(rowData[layerName]) || ''
+  return rowData[layerName] || ''
 }
 
 function proccessImgLayer (layerName, rowData) {
