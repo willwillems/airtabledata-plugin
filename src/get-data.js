@@ -23,7 +23,8 @@ const {
 const {
   changeApiKey,
   changeBase,
-  changeActiveTable
+  changeActiveTable,
+  changeActiveView
 } = require('./settings')
 
 
@@ -48,6 +49,13 @@ async function getActiveTable () {
   return setting
     ? setting
     : await changeActiveTable()
+}
+
+async function getActiveView() {
+  const setting = Settings.documentSettingForKey(document, 'view')
+  return setting
+    ? setting
+    : false
 }
 
 function getInputFromUserPromise (...args) {
@@ -160,7 +168,7 @@ export function onFillTxt (context) {
       return supplyData(items, data, dataKey, proccessTxtLayer)
     })
     .catch((e) => {
-      UI.message('❗️Something went wrong.')
+      UI.message('❗️Something went wrong.' + ((e && e.message) ? ` ${(e && e.message)}` : ''))
       console.error(e)
     })
 }
@@ -178,13 +186,13 @@ export function onFillImg (context) {
       return supplyData(items, data, dataKey, proccessImgLayer)
     })
     .catch((e) => {
-      UI.message('❗️Something went wrong.')
+      UI.message('❗️Something went wrong.' + ((e && e.message) ? ` ${(e && e.message)}` : ''))
       console.error(e)
     })
 }
 
 async function getAirtableData({ count }) {
-  return fetch(`https://api.airtable.com/v0/${await getBaseToken()}/${await getActiveTable()}?maxRecords=${count}&view=Grid%20view`, {
+  return fetch(`https://api.airtable.com/v0/${await getBaseToken()}/${await getActiveTable()}?maxRecords=${count}${(view => view ? `&view=${encodeURI(view)}` : '')(await getActiveView())}`, {
     headers: {
       'Authorization': `Bearer ${await getApiKey()}`
     }
@@ -192,6 +200,7 @@ async function getAirtableData({ count }) {
     .then(res => res.json())
     // TODO: use imageData directly, once #19391 is implemented
     .then(data => {
+      if (data.error) throw new Error(data.error.message)
       return data.records.map(d => d.fields) // get the records and return the object with the fields
     })
 }

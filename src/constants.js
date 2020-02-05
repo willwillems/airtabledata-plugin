@@ -10,5 +10,9 @@ export const promptMessages = {
   'table': {
     title: 'What is the name of the table you want to use?',
     description: ''
+  },
+  'view': {
+    title: 'What is the name of the view you want to use?',
+    description: 'You can just leave this empty if you don\'t want to use a specific view.'
   }
 }

@@ -37,6 +37,12 @@
       "identifier": "changeactivetable",
       "script": "./settings.js",
       "handler": "changeActiveTable"
+    },
+    {
+      "name": "Change active view",
+      "identifier": "changeactiveview",
+      "script": "./settings.js",
+      "handler": "changeActiveView"
     }
   ],
   
@@ -45,7 +51,7 @@
     "items": [
       {
         "title": "Change settings",
-        "items": ["changeapikey", "changebase", "changeactivetable"]
+        "items": ["changeapikey", "changebase", "changeactivetable", "changeactiveview"]
       }
     ]
   }

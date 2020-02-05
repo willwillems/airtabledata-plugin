@@ -71,3 +71,8 @@ export function changeActiveTable (callback) {
   console.log('*************** ADPlugin Triggered changeActiveTable function')
   return changeDocumentSetting('table')
 }
+
+export function changeActiveView(callback) {
+  console.log('*************** ADPlugin Triggered changeActiveView function')
+  return changeDocumentSetting('view')
+}
