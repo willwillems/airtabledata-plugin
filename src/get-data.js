@@ -101,8 +101,8 @@ async function supplyData (items, data, dataKey, proccessDataFunction) {
     })()
     // if it exists get the record id from the parent
     const recordId = (() => {
-      return parentName.match(/@rec[a-zA-Z1-9]+$/)
-        ? parentName.match(/@rec[a-zA-Z1-9]+$/)[0].slice(1)
+      return parentName.match(/@rec[a-zA-Z0-9]+$/)
+        ? parentName.match(/@rec[a-zA-Z0-9]+$/)[0].slice(1)
         : null
     })()
     // get the data for the row, either from a specific record or from the list
