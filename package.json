@@ -1,6 +1,6 @@
 {
   "name": "airtabledata-plugin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A simple way to get your Airtable data into your sketch symbols.",
   "appcast": "https://sketchairtabledataplugin.com/airtabledata-plugin-appcast.xml",
   "engines": {
